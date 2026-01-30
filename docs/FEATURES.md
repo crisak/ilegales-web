@@ -72,6 +72,47 @@ Root:
 - Paleta usa `oklch()` para mejor precision de color
 - `baseColor: "zinc"` en Shadcn para consistencia con tema oscuro
 
+### Mock Data
+- [x] **Crear mock data**
+  - 8 categorias principales con subcategorias
+  - 48 productos con datos completos
+  - Funciones de acceso a datos (getProducts, getCategories, etc.)
+  - Soporte para filtros, ordenamiento y paginacion
+  - Precios en COP
+
+**Archivos creados/modificados:**
+```
+src/
+├── types/
+│   ├── category.ts          # Subcategory, CategoryWithProductCount
+│   └── product.ts           # ProductVariant, campos adicionales
+└── lib/
+    └── data/
+        ├── categories.ts    # 8 categorias con subcategorias
+        ├── products.ts      # 48 productos detallados
+        └── index.ts         # Funciones de acceso a datos
+```
+
+**Categorias implementadas:**
+1. Grafiti & Arte Urbano (sprays, caps, marcadores, proteccion, herramientas)
+2. Tattoo & Tatuajes (maquinas, consumibles, higiene, transfer, aftercare)
+3. Ropa & Moda Urbana (camisetas, hoodies, gorras, pantalones, calzado)
+4. Accesorios & Merch (stickers, parches, pins, utilitarios)
+5. Musica & DJ (vinilos, equipo-dj, accesorios)
+6. Libros & Revistas (arte-tecnica, cultura-hiphop, revistas)
+7. Decoracion & Arte (arte-pared, figuras, objetos-deco)
+8. Coleccionables & Rarezas (ediciones-limitadas, vintage, arte-exclusivo)
+
+**Funciones de datos disponibles:**
+- `getCategories()`, `getCategoriesWithProductCount()`
+- `getCategoryBySlug()`, `getCategoryById()`, `getSubcategory()`
+- `getProducts(filters, sort, pagination)` - con paginacion completa
+- `getProductBySlug()`, `getProductById()`, `getProductWithCategory()`
+- `getFeaturedProducts()`, `getNewProducts()`, `getRelatedProducts()`
+- `searchProducts()`, `getProductsByCategory()`
+- `getBrands()`, `getAllTags()`, `getPopularTags()`
+- `getProductStats()` - estadisticas para dashboard
+
 ---
 
 ## En Progreso
@@ -81,11 +122,6 @@ _Ninguna feature en progreso._
 ---
 
 ## Pendientes
-
-### Mock Data
-- [ ] **Crear mock data**
-  - Prioridad: Alta
-  - Productos y categorias en JSON (`src/lib/data/`)
 
 ### API Routes
 - [ ] **GET /api/products**
@@ -233,3 +269,4 @@ _Ninguna feature en progreso._
 |-------|-------------|---------------------|
 | - | Documentacion inicial completada | CLAUDE.md, docs/* |
 | 2025-01-30 | Setup inicial: Next.js 16, TypeScript, Tailwind, ESLint, Prettier, Shadcn, estructura de carpetas, paleta urbana | next.config.ts, tsconfig.json, eslint.config.mjs, .prettierrc, postcss.config.mjs, components.json, package.json, src/app/*, src/lib/*, src/types/*, src/hooks/* |
+| 2026-01-30 | Mock Data: 8 categorias, 48 productos, funciones de acceso con filtros/paginacion | src/types/category.ts, src/types/product.ts, src/lib/data/* |
