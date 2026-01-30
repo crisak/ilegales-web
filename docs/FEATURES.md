@@ -6,7 +6,71 @@
 
 ## Implementadas
 
-_Ninguna feature implementada aun._
+### Setup Inicial
+- [x] **Crear proyecto Next.js 16**
+  - Next.js 16.1.6 con React 19
+  - TypeScript estricto (`strict`, `noUncheckedIndexedAccess`, `noUnusedLocals`, `noUnusedParameters`)
+  - Tailwind CSS v4 con Shadcn UI (estilo new-york)
+  - ESLint + Prettier (sin `;`, comillas simples)
+  - Turbopack habilitado para desarrollo
+
+- [x] **Configurar next.config.ts**
+  - `cacheComponents: true` habilitado para PPR
+  - Comentario educativo explicando la configuracion
+
+- [x] **Configurar estructura de carpetas**
+  - Estructura segun ARCHITECTURE.md
+  - Carpetas: `components/{ui,shared,features}`, `lib/{api,data,utils,constants}`, `hooks/`, `types/`
+
+- [x] **Configurar paleta de colores urbana**
+  - Escala de grises oscuros (tema principal, NO dark mode)
+  - Estilo stencil/graffiti con alto contraste blanco sobre negro
+  - Variables CSS personalizadas en globals.css
+
+**Archivos creados/modificados:**
+```
+src/
+├── app/
+│   ├── globals.css          # Paleta urbana + Tailwind v4
+│   ├── layout.tsx           # RootLayout con metadata SEO
+│   └── page.tsx             # HomePage basica
+├── components/
+│   ├── ui/                  # (vacio, para Shadcn)
+│   ├── shared/              # (vacio)
+│   └── features/
+│       ├── ProductDetail/   # (vacio)
+│       └── Search/          # (vacio)
+├── lib/
+│   ├── api/                 # (vacio)
+│   ├── data/                # (vacio)
+│   ├── utils/
+│   │   ├── delay.ts         # Simular latencia API
+│   │   └── format.ts        # Formatters (precio, fecha)
+│   ├── constants/
+│   │   └── cache-tags.ts    # Tags para revalidacion
+│   └── utils.ts             # cn() de Shadcn
+├── hooks/
+│   └── useDebounce.ts       # Hook para debounce
+└── types/
+    ├── product.ts           # Product, ProductWithCategory
+    ├── category.ts          # Category
+    ├── api.ts               # ApiResponse, SearchParams
+    └── index.ts             # Re-exports
+
+Root:
+├── next.config.ts           # cacheComponents: true
+├── tsconfig.json            # TypeScript estricto
+├── eslint.config.mjs        # ESLint + Prettier
+├── .prettierrc              # Sin ;, comillas simples
+├── postcss.config.mjs       # Tailwind v4
+├── components.json          # Shadcn config (zinc)
+└── package.json             # Scripts: dev, build, lint, format
+```
+
+**Notas:**
+- Mock data pendiente (siguiente feature)
+- Paleta usa `oklch()` para mejor precision de color
+- `baseColor: "zinc"` en Shadcn para consistencia con tema oscuro
 
 ---
 
@@ -18,22 +82,10 @@ _Ninguna feature en progreso._
 
 ## Pendientes
 
-### Setup Inicial
-- [ ] **Crear proyecto Next.js 16**
-  - Prioridad: Alta
-  - Requisitos: Node.js 22.21+, pnpm, TypeScript, Tailwind CSS, ESLint, Prettier, Shadcn UI
-
-- [ ] **Configurar next.config.ts**
-  - Prioridad: Alta
-  - Habilitar `cacheComponents: true` para PPR
-
-- [ ] **Configurar estructura de carpetas**
-  - Prioridad: Alta
-  - Segun arquitectura definida en ARCHITECTURE.md
-
+### Mock Data
 - [ ] **Crear mock data**
   - Prioridad: Alta
-  - Productos y categorias en JSON
+  - Productos y categorias en JSON (`src/lib/data/`)
 
 ### API Routes
 - [ ] **GET /api/products**
@@ -179,4 +231,5 @@ _Ninguna feature en progreso._
 
 | Fecha | Que se hizo | Archivos modificados |
 |-------|-------------|---------------------|
-| | Documentacion inicial completada | CLAUDE.md, docs/* |
+| - | Documentacion inicial completada | CLAUDE.md, docs/* |
+| 2025-01-30 | Setup inicial: Next.js 16, TypeScript, Tailwind, ESLint, Prettier, Shadcn, estructura de carpetas, paleta urbana | next.config.ts, tsconfig.json, eslint.config.mjs, .prettierrc, postcss.config.mjs, components.json, package.json, src/app/*, src/lib/*, src/types/*, src/hooks/* |
