@@ -6,10 +6,13 @@
 
 ## Inicio de Sesion
 
+<!-- ⭐️ FAVORITE -->
 ### Primera vez en el proyecto
 ```
 Lee CLAUDE.md y docs/FEATURES.md para entender el proyecto.
 Quiero comenzar a implementar [descripcion de la tarea].
+
+- Crear una nueva rama para hacer estos cambios `main -> [feature-branch-name]`
 ```
 
 ### Retomar despues de tiempo
@@ -159,6 +162,7 @@ Referencia: docs/LEARNING_GOALS.md seccion 3 (Accesibilidad)
 
 ## Actualizacion de Documentacion
 
+<!-- ⭐️ FAVORITE -->
 ### Marcar feature como completada
 ```
 Acabo de completar [nombre de la feature].
