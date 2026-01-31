@@ -1,7 +1,7 @@
 # Arquitectura del Proyecto
 
 ## Objetivo del POC
-Explorar y comprender los diferentes tipos de renderizado en Next.js 16 mediante un e-commerce simplificado, con enfasis en SEO y accesibilidad.
+Explorar y comprender los diferentes tipos de renderizado en Next.js 16(Using App Router) mediante un e-commerce simplificado, con enfasis en SEO y accesibilidad.
 
 ---
 

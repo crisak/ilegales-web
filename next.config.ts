@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   // con "holes" dinamicos que se streaman despues.
   // Reemplaza el antiguo experimental.ppr de Next.js 15.
   cacheComponents: true,
+  turbopack: {
+    root: __dirname,
+  },
 }
 
 export default nextConfig

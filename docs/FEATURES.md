@@ -113,6 +113,66 @@ src/
 - `getBrands()`, `getAllTags()`, `getPopularTags()`
 - `getProductStats()` - estadisticas para dashboard
 
+### API Routes
+- [x] **GET /api/products**
+  - Filtros: category, subcategory, featured, new, minPrice, maxPrice, search, brand, inStock
+  - Ordenamiento: price-asc, price-desc, name-asc, name-desc, newest, stock
+  - Paginacion completa con page y limit
+  - Delay simulado (300-800ms)
+  - Cache: 60s con stale-while-revalidate
+
+- [x] **GET /api/products/[id]**
+  - Detalle completo con categoria y subcategoria
+  - Delay simulado (300-800ms)
+  - Cache: 60s con stale-while-revalidate
+
+- [x] **GET /api/products/[id]/price**
+  - Precio en tiempo real con variacion simulada (±5%)
+  - Delay largo (800-1500ms) para demostrar streaming
+  - Sin cache (force-dynamic)
+
+- [x] **GET /api/products/[id]/stock**
+  - Stock en tiempo real con variacion simulada
+  - Estados: in_stock, low_stock, out_of_stock
+  - Delay largo (800-1500ms) para demostrar streaming
+  - Sin cache (force-dynamic)
+
+- [x] **GET /api/categories**
+  - Lista con conteo de productos
+  - Filtro por slug para categoria especifica
+  - Cache: 300s (categorias cambian menos)
+
+- [x] **GET /api/search**
+  - Busqueda avanzada con filtros completos
+  - Facetas: categorias, marcas, tags populares
+  - Ordenamiento por relevancia, precio, fecha, nombre
+  - Cache: 30s
+
+- [x] **POST /api/revalidate**
+  - Webhook para on-demand revalidation
+  - Autenticacion por token secreto
+  - Tipos: products, product, product-price, product-stock, categories, category, search, all
+  - Soporte para tags personalizados
+
+**Archivos creados:**
+```
+src/app/api/
+├── products/
+│   ├── route.ts              # GET /api/products
+│   └── [id]/
+│       ├── route.ts          # GET /api/products/[id]
+│       ├── price/
+│       │   └── route.ts      # GET /api/products/[id]/price
+│       └── stock/
+│           └── route.ts      # GET /api/products/[id]/stock
+├── categories/
+│   └── route.ts              # GET /api/categories
+├── search/
+│   └── route.ts              # GET /api/search
+└── revalidate/
+    └── route.ts              # POST /api/revalidate
+```
+
 ---
 
 ## En Progreso
@@ -122,33 +182,6 @@ _Ninguna feature en progreso._
 ---
 
 ## Pendientes
-
-### API Routes
-- [ ] **GET /api/products**
-  - Con delay simulado (300-800ms)
-  - Filtros por categoria
-
-- [ ] **GET /api/products/[id]**
-  - Detalle de producto
-  - Con delay simulado
-
-- [ ] **GET /api/products/[id]/price**
-  - Precio en tiempo real (para streaming/PPR)
-  - Delay mas largo para demostrar streaming
-
-- [ ] **GET /api/products/[id]/stock**
-  - Stock en tiempo real (para streaming/PPR)
-  - Delay mas largo para demostrar streaming
-
-- [ ] **GET /api/categories**
-  - Lista de categorias
-
-- [ ] **GET /api/search**
-  - Busqueda con filtros (query, categoria, precio min/max, ordenamiento)
-
-- [ ] **POST /api/revalidate**
-  - Webhook para on-demand revalidation
-  - Usar revalidateTag()
 
 ### Paginas
 - [ ] **Home page** (`/`)
@@ -270,3 +303,4 @@ _Ninguna feature en progreso._
 | - | Documentacion inicial completada | CLAUDE.md, docs/* |
 | 2025-01-30 | Setup inicial: Next.js 16, TypeScript, Tailwind, ESLint, Prettier, Shadcn, estructura de carpetas, paleta urbana | next.config.ts, tsconfig.json, eslint.config.mjs, .prettierrc, postcss.config.mjs, components.json, package.json, src/app/*, src/lib/*, src/types/*, src/hooks/* |
 | 2026-01-30 | Mock Data: 8 categorias, 48 productos, funciones de acceso con filtros/paginacion | src/types/category.ts, src/types/product.ts, src/lib/data/* |
+| 2026-01-30 | API Routes: 7 endpoints REST con filtros, paginacion, streaming y revalidacion | src/app/api/* |
