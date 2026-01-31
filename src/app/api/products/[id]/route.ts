@@ -43,6 +43,3 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
   )
 }
-
-// Configurar revalidación ISR para este endpoint
-export const revalidate = 60

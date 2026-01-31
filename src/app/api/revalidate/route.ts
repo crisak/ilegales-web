@@ -175,6 +175,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-// Este endpoint siempre es dinámico
-export const dynamic = 'force-dynamic'

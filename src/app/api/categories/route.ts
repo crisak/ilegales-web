@@ -64,6 +64,3 @@ export async function GET(request: NextRequest) {
     }
   )
 }
-
-// Las categorías cambian menos, cache más largo
-export const revalidate = 300

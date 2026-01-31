@@ -131,6 +131,3 @@ export async function GET(request: NextRequest) {
     }
   )
 }
-
-// Búsquedas son dinámicas pero con cache corto
-export const revalidate = 30
