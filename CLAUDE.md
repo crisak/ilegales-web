@@ -12,7 +12,7 @@ Artículos y Accesorios
 Stickers
 Whastapp 3123574867
 ```
-- **Stack:** Next.js 16, TypeScript, Tailwind CSS
+- **Stack:** Next.js 16(Using App Router), TypeScript, Tailwind CSS
 - **Objetivo:** POC educativo para aprender renderizado, SEO y accesibilidad en Next.js
 
 ## Objetivos de Aprendizaje

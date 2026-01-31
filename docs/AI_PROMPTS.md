@@ -21,6 +21,7 @@ Retomando el proyecto. Lee docs/FEATURES.md y dime el estado actual.
 Quiero continuar con [siguiente tarea].
 ```
 
+<!-- ⭐️ FAVORITE -->
 ### Continuar sesion anterior
 ```
 Continuamos donde lo dejamos. El ultimo cambio fue [descripcion].
