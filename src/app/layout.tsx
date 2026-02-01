@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+
+import { Footer, Header, SkipLink } from '@/components/shared'
+
 import './globals.css'
 
 const geistSans = Geist({
@@ -32,9 +35,13 @@ export default function RootLayout({
     // lang="es": Importante para accesibilidad y SEO en sitios en español
     <html lang="es">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}
       >
+        {/* SkipLink: Accesibilidad - permite saltar la navegacion */}
+        <SkipLink />
+        <Header />
         {children}
+        <Footer />
       </body>
     </html>
   )
