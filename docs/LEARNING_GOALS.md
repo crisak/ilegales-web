@@ -4,35 +4,83 @@
 
 ---
 
+## IMPORTANTE: Incompatibilidades con cacheComponents
+
+> **Cuando `cacheComponents: true` esta habilitado en next.config.ts, estas configuraciones de segmento de ruta causan ERROR:**
+> - `export const revalidate` - NO USAR
+> - `export const dynamic` - NO USAR
+> - `export const dynamicParams` - NO USAR
+>
+> **En su lugar, usar el nuevo modelo:**
+> - `'use cache'` directive + `cacheLife()` + `cacheTag()`
+> - Todo es dinamico por defecto (sin cache)
+> - Para cachear, agregar `'use cache'` al inicio de la funcion/componente
+
+---
+
 ## 1. Tipos de Renderizado
 
-### 1.1 Static Site Generation (SSG)
-- **Que es:** Paginas generadas en build time, HTML estatico
+### 1.1 Contenido Estatico Cacheado (reemplaza SSG)
+- **Que es:** Paginas/componentes cacheados con `'use cache'` + `cacheLife('max')`
 - **Implementar en:** Home page
 - **Aprender:**
-  - Cuando NO usar SSG (datos frecuentemente cambiantes)
-  - Diferencia con ISR
-  - Como Next.js decide si una pagina es estatica
+  - `'use cache'` directive al inicio de funcion
+  - `cacheLife('max')` para cache de larga duracion
+  - Cuando NO cachear (datos personalizados, tiempo real)
+- **Configuracion clave:**
+  ```tsx
+  // src/app/page.tsx (Home)
+  import { cacheLife, cacheTag } from 'next/cache'
+
+  // 'use cache' + cacheLife('max'): Equivale al antiguo SSG.
+  // La pagina se cachea indefinidamente hasta invalidacion manual.
+  export default async function HomePage() {
+    'use cache'
+    cacheLife('max')
+    cacheTag('home')
+
+    return <main>...</main>
+  }
+  ```
 - **Estado:** [ ] Pendiente
 - **Notas:**
   ```
   [Espacio para tus notas de aprendizaje]
   ```
 
-### 1.2 Incremental Static Regeneration (ISR)
-- **Que es:** Paginas estaticas que se regeneran periodicamente
+### 1.2 Cache con Revalidacion (reemplaza ISR)
+- **Que es:** Paginas cacheadas que se revalidan periodicamente
 - **Implementar en:** Lista de productos, Categorias
 - **Aprender:**
-  - `export const revalidate = N` (tiempo en segundos)
-  - `revalidatePath()` y `revalidateTag()` para on-demand
-  - Cache tags para invalidacion granular
-  - Stale-while-revalidate behavior
+  - `cacheLife({ revalidate: N })` para tiempo en segundos
+  - `cacheLife('hours')`, `cacheLife('days')` para perfiles predefinidos
+  - `cacheTag()` para invalidacion on-demand con `revalidateTag()`
 - **Configuracion clave:**
   ```tsx
-  // revalidate = 60: Regenera la pagina cada 60 segundos
-  // si hay trafico. Sirve contenido stale mientras regenera en background.
-  // Beneficio: respuestas siempre rapidas, contenido eventualmente fresco.
-  export const revalidate = 60
+  // src/app/products/page.tsx
+  import { cacheLife, cacheTag } from 'next/cache'
+
+  // 'use cache' + cacheLife({ revalidate: 60 }): Equivale al antiguo ISR.
+  // La pagina se revalida cada 60 segundos si hay trafico.
+  // NO usar export const revalidate = 60 (causa error con cacheComponents).
+  export default async function ProductsPage() {
+    'use cache'
+    cacheLife({ revalidate: 60 }) // O usar cacheLife('hours')
+    cacheTag('products')
+
+    const products = await getProducts()
+    return <ProductGrid products={products} />
+  }
+  ```
+- **Perfiles de cacheLife:**
+  ```tsx
+  cacheLife('seconds')  // Muy corto
+  cacheLife('minutes')  // Minutos
+  cacheLife('hours')    // Horas
+  cacheLife('days')     // Dias
+  cacheLife('weeks')    // Semanas
+  cacheLife('max')      // Maximo (indefinido)
+  cacheLife({ revalidate: 60 }) // Custom: 60 segundos
   ```
 - **Estado:** [ ] Pendiente
 - **Notas:**
@@ -40,20 +88,30 @@
   [Espacio para tus notas de aprendizaje]
   ```
 
-### 1.3 Server-Side Rendering (SSR)
-- **Que es:** Paginas renderizadas en cada request
+### 1.3 Renderizado Dinamico (reemplaza SSR/force-dynamic)
+- **Que es:** Paginas que se renderizan en cada request (comportamiento por defecto)
 - **Implementar en:** Busqueda
 - **Aprender:**
-  - `export const dynamic = 'force-dynamic'`
-  - Cuando usar SSR vs ISR
-  - Impacto en TTFB y performance
-  - `searchParams` ahora es Promise (await en Next.js 16)
+  - Con cacheComponents, TODO es dinamico por defecto
+  - NO usar `export const dynamic = 'force-dynamic'` (causa error)
+  - Simplemente no poner `'use cache'` = dinamico
 - **Configuracion clave:**
   ```tsx
-  // dynamic = 'force-dynamic': Fuerza renderizado en cada request.
-  // Necesario cuando dependes de searchParams que cambian constantemente.
-  // No tiene sentido cachear porque las combinaciones son infinitas.
-  export const dynamic = 'force-dynamic'
+  // src/app/search/page.tsx
+
+  // SIN 'use cache' = dinamico automaticamente
+  // NO necesitas export const dynamic = 'force-dynamic'
+  // Con cacheComponents, todo es dinamico a menos que uses 'use cache'
+  export default async function SearchPage({
+    searchParams,
+  }: {
+    searchParams: Promise<{ q?: string }>
+  }) {
+    const { q } = await searchParams // searchParams es Promise en Next.js 16
+
+    const results = await searchProducts(q)
+    return <SearchResults results={results} />
+  }
   ```
 - **Estado:** [ ] Pendiente
 - **Notas:**
@@ -65,10 +123,9 @@
 - **Que es:** Renderizado en el navegador del usuario
 - **Implementar en:** SearchBar, Filters, ImageGallery
 - **Aprender:**
-  - `'use client'` directive
+  - `'use client'` directive (sin cambios en Next.js 16)
   - Cuando es necesario (useState, useEffect, eventos, browser APIs)
   - Impacto en bundle size (mas Client Components = mas JS)
-  - Hidratacion y posibles mismatches
 - **Regla:**
   ```tsx
   // 'use client': SOLO usar cuando necesites:
@@ -77,6 +134,13 @@
   // - Browser APIs (localStorage, window, navigator)
   // - Librerias que requieren el navegador
   'use client'
+
+  import { useState } from 'react'
+
+  export function SearchBar() {
+    const [query, setQuery] = useState('')
+    // ...
+  }
   ```
 - **Estado:** [ ] Pendiente
 - **Notas:**
@@ -91,12 +155,10 @@
   - `loading.tsx` para loading UI automatico por segmento de ruta
   - `<Suspense>` boundaries manuales para control granular
   - Cargas en paralelo vs secuencial
-  - Como mejora el TTFB y perceived performance
 - **Patron clave:**
   ```tsx
   // Suspense permite mostrar contenido parcial mientras otros
   // componentes siguen cargando. El fallback se muestra inmediatamente.
-  // Cuando SlowComponent termina, reemplaza el fallback via streaming.
   <Suspense fallback={<Skeleton />}>
     <SlowComponent />
   </Suspense>
@@ -115,26 +177,39 @@
   [Espacio para tus notas de aprendizaje]
   ```
 
-### 1.6 generateStaticParams
+### 1.6 generateStaticParams (con cacheComponents)
 - **Que es:** Pre-generar rutas dinamicas en build time
 - **Implementar en:** Categorias, productos populares
 - **Aprender:**
-  - `generateStaticParams()` function
-  - `dynamicParams = true/false`
-  - Estrategia: pre-generar las mas importantes, generar el resto on-demand
+  - `generateStaticParams()` sigue funcionando igual
+  - NO usar `export const dynamicParams` (causa error con cacheComponents)
+  - Las rutas no listadas se generan on-demand automaticamente
 - **Configuracion clave:**
   ```tsx
-  // dynamicParams = true: Permite generar paginas on-demand
-  // para params no incluidos en generateStaticParams.
-  // Con false, rutas no pre-generadas retornan 404.
-  export const dynamicParams = true
+  // src/app/products/[category]/page.tsx
+  import { cacheLife, cacheTag } from 'next/cache'
 
   // generateStaticParams: Pre-genera rutas en build time.
-  // Estrategia: generar categorias conocidas, productos populares (top 100).
-  // El resto se genera on-demand gracias a dynamicParams = true.
+  // Las rutas no listadas se generan on-demand automaticamente.
+  // NO usar dynamicParams con cacheComponents (causa error).
   export async function generateStaticParams() {
     const categories = await getCategories()
     return categories.map(cat => ({ category: cat.slug }))
+  }
+
+  export default async function CategoryPage({
+    params,
+  }: {
+    params: Promise<{ category: string }>
+  }) {
+    'use cache'
+    const { category } = await params
+
+    cacheLife('hours')
+    cacheTag(`category-${category}`)
+
+    const products = await getProductsByCategory(category)
+    return <ProductGrid products={products} />
   }
   ```
 - **Estado:** [ ] Pendiente
@@ -143,85 +218,39 @@
   [Espacio para tus notas de aprendizaje]
   ```
 
-### 1.7 Cache Components + PPR (Next.js 16)
-- **Que es:** Sistema que reemplaza `experimental.ppr`. Permite definir explicitamente que partes son estaticas (cacheables) y cuales dinamicas
-- **Implementar en:** Detalle de producto (shell estatico + holes dinamicos)
+### 1.7 PPR con Cache Components (Next.js 16)
+- **Que es:** Shell estatico cacheado + holes dinamicos en una pagina
+- **Implementar en:** Detalle de producto (info cacheada + precio/stock dinamico)
 - **Aprender:**
-  - `cacheComponents: true` en next.config.ts (habilita PPR)
-  - Directiva `'use cache'` en componentes/funciones
-  - `cacheLife()` para definir duracion (perfiles: 'max', 'hours', 'days', 'weeks')
-  - `cacheTag()` para invalidacion programatica con `revalidateTag()`
-- **Configuracion en next.config.ts:**
-  ```ts
-  // next.config.ts
-  // cacheComponents: true - Habilita el nuevo sistema de Cache Components
-  // que incluye PPR (Partial Prerendering). Reemplaza experimental.ppr.
-  const nextConfig = {
-    cacheComponents: true,
-  }
-  ```
-- **Componente con cache explicito (shell estatico):**
+  - Partes con `'use cache'` = shell estatico (cacheado)
+  - Partes sin `'use cache'` dentro de `<Suspense>` = holes dinamicos
+  - El shell se sirve instantaneamente, holes se streaman
+- **Patron PPR completo:**
   ```tsx
-  // src/components/features/ProductDetail/ProductInfo.tsx
-
-  // 'use cache': Marca este componente como cacheable.
-  // Forma parte del "shell estatico" en PPR.
-  // El HTML se genera en build/ISR y se sirve instantaneamente.
-  'use cache'
+  // src/app/products/[category]/[productId]/page.tsx
+  import { Suspense } from 'react'
   import { cacheLife, cacheTag } from 'next/cache'
 
-  export async function ProductInfo({ productId }: Props) {
-    // cacheLife('hours'): Define cuanto tiempo el contenido se considera fresco.
-    // Perfiles: 'max' (maximo), 'hours', 'days', 'weeks'
-    // Tambien puedes usar custom: cacheLife({ stale: 300, revalidate: 60 })
-    cacheLife('hours')
+  export default async function ProductPage({
+    params,
+  }: {
+    params: Promise<{ category: string; productId: string }>
+  }) {
+    'use cache' // La pagina base es cacheada (shell)
 
-    // cacheTag: Permite invalidar este cache especificamente.
-    // Luego puedes llamar revalidateTag('product-123') para invalidar.
+    const { productId } = await params
+    cacheLife({ revalidate: 60 })
     cacheTag(`product-${productId}`)
 
     const product = await getProduct(productId)
-    return (
-      <article>
-        <h1>{product.name}</h1>
-        <p>{product.description}</p>
-      </article>
-    )
-  }
-  ```
-- **Componente dinamico (hole en PPR):**
-  ```tsx
-  // src/components/features/ProductDetail/LivePrice.tsx
-
-  // Este componente NO usa 'use cache', por lo que es dinamico.
-  // Se renderiza como "hole" en PPR - streaming en cada request.
-  // Ideal para datos que cambian frecuentemente (precio, stock).
-  export async function LivePrice({ productId }: Props) {
-    // fetch sin cache para obtener precio en tiempo real
-    const price = await fetchRealTimePrice(productId)
-    return (
-      // aria-live="polite": Anuncia cambios a lectores de pantalla
-      <span aria-live="polite" className="text-2xl font-bold">
-        ${price}
-      </span>
-    )
-  }
-  ```
-- **Patron PPR completo en pagina:**
-  ```tsx
-  // src/app/products/[category]/[productId]/page.tsx
-
-  // La pagina combina shell estatico + holes dinamicos.
-  // PPR envia el shell inmediatamente, luego streama los holes.
-  async function ProductPage({ params }) {
-    const { productId } = await params // params es Promise en Next.js 16
 
     return (
       <main>
-        {/* Shell estatico - se sirve instantaneamente desde cache */}
-        <ProductInfo productId={productId} />
+        {/* Shell estatico - cacheado */}
+        <ProductInfo product={product} />
+        <ProductImages images={product.images} />
 
-        {/* Holes dinamicos - se streaman cuando esten listos */}
+        {/* Holes dinamicos - sin cache, streaming */}
         <Suspense fallback={<PriceSkeleton />}>
           <LivePrice productId={productId} />
         </Suspense>
@@ -231,6 +260,60 @@
         </Suspense>
       </main>
     )
+  }
+  ```
+- **Componente dinamico (hole):**
+  ```tsx
+  // src/components/features/ProductDetail/LivePrice.tsx
+
+  // SIN 'use cache' = este componente es dinamico (hole en PPR)
+  // Se renderiza en cada request, no se cachea
+  export async function LivePrice({ productId }: { productId: string }) {
+    const { price } = await getRealTimePrice(productId)
+
+    return (
+      <span aria-live="polite" className="text-2xl font-bold">
+        ${price.toLocaleString()}
+      </span>
+    )
+  }
+  ```
+- **Estado:** [ ] Pendiente
+- **Notas:**
+  ```
+  [Espacio para tus notas de aprendizaje]
+  ```
+
+### 1.8 Cache en Funciones (no solo componentes)
+- **Que es:** `'use cache'` tambien funciona en funciones de datos
+- **Implementar en:** lib/api/products.ts
+- **Aprender:**
+  - Cachear logica de fetch independiente del componente
+  - Reutilizar cache entre multiples componentes
+  - Invalidacion granular con cacheTag
+- **Patron:**
+  ```tsx
+  // src/lib/api/products.ts
+  import { cacheLife, cacheTag } from 'next/cache'
+
+  // 'use cache' en funcion: cachea el resultado independiente
+  // de donde se llame. Multiples componentes comparten este cache.
+  export async function getProducts() {
+    'use cache'
+    cacheLife('hours')
+    cacheTag('products')
+
+    const response = await fetch(`${API_URL}/products`)
+    return response.json()
+  }
+
+  // Funcion SIN cache para datos en tiempo real
+  export async function getRealTimePrice(productId: string) {
+    // Sin 'use cache' = siempre fetch fresco
+    const response = await fetch(`${API_URL}/products/${productId}/price`, {
+      cache: 'no-store',
+    })
+    return response.json()
   }
   ```
 - **Estado:** [ ] Pendiente
@@ -254,25 +337,22 @@
   ```tsx
   // generateMetadata: Genera metadata dinamica basada en params.
   // Se ejecuta en el servidor, puede hacer fetch de datos.
-  // El metadata se incluye en el <head> del HTML.
-  export async function generateMetadata({ params }): Promise<Metadata> {
+  export async function generateMetadata({
+    params,
+  }: {
+    params: Promise<{ productId: string }>
+  }): Promise<Metadata> {
     const { productId } = await params // params es Promise en Next.js 16
     const product = await getProduct(productId)
 
     return {
-      title: product.name, // Se combina con template del layout
-      description: product.description.slice(0, 160), // Max 160 chars
+      title: product.name,
+      description: product.description.slice(0, 160),
       openGraph: {
         title: product.name,
         description: product.description,
         images: [{ url: product.image, width: 1200, height: 630 }],
         type: 'product',
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: product.name,
-        description: product.description,
-        images: [product.image],
       },
     }
   }
@@ -288,12 +368,9 @@
   - Schema.org/Product para productos
   - Schema.org/BreadcrumbList para navegacion
   - Validacion con Google Rich Results Test
-  - Como incluirlo en el HTML
 - **Patron:**
   ```tsx
-  // JSON-LD se incluye como script en el componente
-  // Google lo usa para rich snippets en resultados de busqueda
-  function ProductJsonLd({ product }: Props) {
+  function ProductJsonLd({ product }: { product: Product }) {
     const jsonLd = {
       '@context': 'https://schema.org',
       '@type': 'Product',
@@ -301,14 +378,11 @@
       description: product.description,
       image: product.images,
       sku: product.sku,
-      brand: {
-        '@type': 'Brand',
-        name: product.brand,
-      },
+      brand: { '@type': 'Brand', name: product.brand },
       offers: {
         '@type': 'Offer',
         price: product.price,
-        priceCurrency: 'USD',
+        priceCurrency: 'COP',
         availability: product.inStock
           ? 'https://schema.org/InStock'
           : 'https://schema.org/OutOfStock',
@@ -333,48 +407,6 @@
 - **Aprender:**
   - `app/sitemap.ts` dinamico
   - `app/robots.ts` dinamico
-  - Prioridades y changeFrequency
-  - Que bloquear en robots.txt
-- **Sitemap:**
-  ```tsx
-  // app/sitemap.ts
-  // Next.js genera sitemap.xml automaticamente desde este archivo
-  export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const products = await getProducts()
-
-    const productUrls = products.map(product => ({
-      url: `https://example.com/products/${product.category}/${product.id}`,
-      lastModified: product.updatedAt,
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    }))
-
-    return [
-      {
-        url: 'https://example.com',
-        lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: 1,
-      },
-      ...productUrls,
-    ]
-  }
-  ```
-- **Robots.txt:**
-  ```tsx
-  // app/robots.ts
-  // Controla que pueden indexar los buscadores
-  export default function robots(): MetadataRoute.Robots {
-    return {
-      rules: {
-        userAgent: '*',
-        allow: '/',
-        disallow: ['/api/', '/search?'], // No indexar API ni busquedas
-      },
-      sitemap: 'https://example.com/sitemap.xml',
-    }
-  }
-  ```
 - **Estado:** [ ] Pendiente
 - **Notas:**
   ```
@@ -389,8 +421,6 @@
 - **Implementar:** Skip links, focus visible, tab order logico
 - **Patron Skip Link:**
   ```tsx
-  // SkipLink permite saltar directamente al contenido principal
-  // Esencial para usuarios de teclado y lectores de pantalla
   function SkipLink() {
     return (
       <a
@@ -414,43 +444,16 @@
   </button>
 
   // aria-live: Anuncia cambios dinamicos a lectores de pantalla
-  // "polite" espera a que termine de hablar, "assertive" interrumpe
-  <div aria-live="polite" aria-atomic="true">
-    {cartCount} productos en el carrito
-  </div>
-
-  // role: Define el tipo de elemento para tecnologias asistivas
-  <nav role="navigation" aria-label="Menu principal">
+  <span aria-live="polite">${price}</span>
   ```
 - **Estado:** [ ] Pendiente
 
 ### 3.3 Semantic HTML
-- **Implementar:** Usar elementos correctos para su proposito
-- **Elementos:**
-  - `<main>` - Contenido principal (uno por pagina)
-  - `<nav>` - Navegacion
-  - `<article>` - Contenido independiente (producto, post)
-  - `<section>` - Seccion tematica
-  - `<header>`, `<footer>` - Cabecera y pie
-  - `<h1>`-`<h6>` - Jerarquia de titulos (un h1 por pagina)
+- **Implementar:** main, nav, article, section, header, footer
 - **Estado:** [ ] Pendiente
 
 ### 3.4 Imagenes
 - **Implementar:** Alt text descriptivo
-- **Patron:**
-  ```tsx
-  // Alt text debe describir el contenido de la imagen
-  // Si es decorativa, usar alt="" (vacio, no omitir)
-  <Image
-    src={product.image}
-    alt={`${product.name} - ${product.color} - vista frontal`}
-    width={400}
-    height={400}
-  />
-
-  // Imagen decorativa (icono que acompana texto)
-  <Image src="/icons/cart.svg" alt="" aria-hidden="true" />
-  ```
 - **Estado:** [ ] Pendiente
 
 ---
@@ -463,42 +466,52 @@
   ```tsx
   // ANTES (Next.js 15)
   function Page({ params }) {
-    const { id } = params // Sincrono
+    const { id } = params
   }
 
   // AHORA (Next.js 16)
   async function Page({ params }) {
     const { id } = await params // Asincrono!
   }
-
-  // searchParams tambien es Promise
-  async function SearchPage({ searchParams }) {
-    const { q, category } = await searchParams
-  }
   ```
 - **Estado:** [ ] Pendiente
 
 ### 4.2 cookies(), headers(), draftMode()
 - **Aprender:** Ahora son async, requieren `await`
-- **Migracion:**
-  ```tsx
-  // ANTES
-  const cookieStore = cookies()
-  const headersList = headers()
-
-  // AHORA
-  const cookieStore = await cookies()
-  const headersList = await headers()
-  const draft = await draftMode()
-  ```
 - **Estado:** [ ] Pendiente
 
-### 4.3 Cambios en next.config
-- **Aprender:** Nuevas opciones, opciones removidas
-- **Removido:**
-  - `experimental.ppr` -> usar `cacheComponents: true`
-  - `experimental.dynamicIO` -> usar `cacheComponents: true`
-  - `next lint` command -> usar `npx eslint .`
+### 4.3 Configuraciones Incompatibles con cacheComponents
+- **IMPORTANTE:** Estas configuraciones causan ERROR con cacheComponents:
+  ```tsx
+  // NO USAR - Causa error:
+  // "Route segment config X is not compatible with nextConfig.cacheComponents"
+  export const revalidate = 60
+  export const dynamic = 'force-dynamic'
+  export const dynamic = 'force-static'
+  export const dynamicParams = true
+  ```
+- **Usar en su lugar:**
+  ```tsx
+  // Cache con revalidacion (reemplaza revalidate)
+  export default async function Page() {
+    'use cache'
+    cacheLife({ revalidate: 60 })
+    // ...
+  }
+
+  // Dinamico (reemplaza force-dynamic)
+  // Simplemente NO usar 'use cache'
+  export default async function Page() {
+    // Sin 'use cache' = dinamico por defecto
+    // ...
+  }
+
+  // Rutas dinamicas (reemplaza dynamicParams)
+  // Solo usar generateStaticParams, el resto es on-demand
+  export async function generateStaticParams() {
+    return [{ id: '1' }, { id: '2' }]
+  }
+  ```
 - **Estado:** [ ] Pendiente
 
 ---
@@ -511,7 +524,6 @@
 
 <!--
 Ejemplo:
-| 2024-01-15 | ISR | revalidate define tiempo en segundos, regenera en background | products/page.tsx |
-| 2024-01-16 | PPR | 'use cache' marca componentes como shell estatico | ProductInfo.tsx |
-| 2024-01-17 | a11y | aria-live="polite" para anunciar cambios de precio | LivePrice.tsx |
+| 2025-01-31 | cacheComponents | revalidate/dynamic/dynamicParams NO compatibles con cacheComponents | ARCHITECTURE.md |
+| 2025-01-31 | PPR | 'use cache' = shell, sin cache + Suspense = hole | ProductPage.tsx |
 -->

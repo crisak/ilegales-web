@@ -1,0 +1,6 @@
+export { Breadcrumbs } from './Breadcrumbs'
+export { CurrentYear } from './CurrentYear'
+export { Footer } from './Footer'
+export { Header } from './Header'
+export { Pagination } from './Pagination'
+export { SkipLink } from './SkipLink'
